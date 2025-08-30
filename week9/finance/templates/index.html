@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Portfolio
+{% endblock %}
+
+{% block main %}
+<div class="container my-4">
+    <h1 class="mb-4">Your Portfolio</h1>
+
+    {% if portfolio %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-bordered table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Shares</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in portfolio %}
+                    <tr>
+                        <td>{{ stock.symbol }}</td>
+                        <td>{{ stock.shares }}</td>
+                        <td>{{ stock.price | usd }}</td>
+                        <td>{{ stock.total | usd }}</td>
+                        <td>
+
+                        <form action="/buy" method="post" class="d-inline-flex align-items-center mb-1" id="buy-form-{{ stock.symbol }}">
+                            <input type="hidden" name="symbol" value="{{ stock.symbol }}">
+                            <input type="number" name="shares" min="1" placeholder="Qty" class="form-control form-control-sm me-2 d-none" style="width: 80px;">
+                            <button type="button" class="btn btn-sm btn-success toggle-input me-2" data-target="#buy-form-{{ stock.symbol }}">Buy</button>
+                            <button type="submit" class="btn btn-sm btn-success d-none">Confirm</button>
+                        </form>
+
+                        <form action="/sell" method="post" class="d-inline-flex align-items-center" id="sell-form-{{ stock.symbol }}">
+                            <input type="hidden" name="symbol" value="{{ stock.symbol }}">
+                            <input type="number" name="shares" min="1" max="{{ stock.shares }}" placeholder="Qty" class="form-control form-control-sm me-2 d-none" style="width: 80px;">
+                            <button type="button" class="btn btn-sm btn-danger toggle-input me-2" data-target="#sell-form-{{ stock.symbol }}">Sell</button>
+                            <button type="submit" class="btn btn-sm btn-danger d-none">Confirm</button>
+                        </form>
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="3"><strong>Cash</strong></td>
+                        <td colspan="2">{{ cash | usd }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><strong>Total Holdings</strong></td>
+                        <td colspan="2">{{ total_holdings | usd }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+        <p>You currently don't own any stocks.</p>
+    {% endif %}
+</div>
+
+<!-- JS to toggle Buy/Sell quantity input -->
+<script>
+document.querySelectorAll(".toggle-input").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const form = document.querySelector(btn.dataset.target);
+        const input = form.querySelector("input[type='number']");
+        const submitBtn = form.querySelector("button[type='submit']");
+        input.classList.toggle("d-none");
+        submitBtn.classList.toggle("d-none");
+        btn.classList.toggle("d-none");
+    });
+});
+</script>
+{% endblock %}
