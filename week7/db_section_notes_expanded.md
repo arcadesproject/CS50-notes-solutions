@@ -236,6 +236,89 @@ DELETE FROM table WHERE column = 'value';
 Use `UPDATE` to modify existing data and `DELETE` to remove records. Always use `WHERE` to avoid affecting unintended rows.
 
 ---
+## SQLAlchemy
+
+**Definition**: A Python Object Relational Mapper (ORM) that provides a high-level, declarative API for defining database schemas and executing SQL in a Pythonic way.  
+
+### Model Declaration
+
+```python
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import declarative_base, relationship
+
+Base = declarative_base()
+
+class Student(Base):
+    __tablename__ = 'students'
+    id            = Column(Integer, primary_key=True)
+    student_name  = Column(String(50), nullable=False)
+    assignments   = relationship("HouseAssignment", back_populates="student")
+```
+
+- Maps Python classes to tables and attributes to columns.  
+- `declarative_base()` ties models together under a common metadata.  
+- Relationships (`relationship`) express foreign-key links in Python objects.
+
+### Engine & Session
+
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+engine  = create_engine('sqlite:///roster.db')
+Session = sessionmaker(bind=engine)
+with Session() as session:
+    # CRUD operations here
+    session.commit()
+```
+
+- The Engine manages DB connections.  
+- Sessions handle transaction scope, flushing, and commit/rollback.  
+
+---
+
+## Idempotency
+
+**Definition**: Designing database operations so that running the same import or migration multiple times leaves data unchanged after the first application.  
+
+### Upsert Patterns
+
+```python
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+
+stmt = sqlite_insert(House).values(house_name='Gryffindor', head='McGonagall')
+stmt = stmt.on_conflict_do_update(
+    index_elements=['house_name'],
+    set_={'head': stmt.excluded.head}
+)
+session.execute(stmt)
+session.commit()
+```
+
+- `on_conflict_do_update` (SQLite) or `ON CONFLICT … DO UPDATE` (Postgres) lets you merge new data without duplicating rows.  
+- For simple tables, you can use `session.merge()` to insert or update based on primary key.  
+- Avoids stale duplicates and ensures “run it again” safety.
+
+---
+
+## Composite Keys
+
+**Definition**: Using more than one column as the table’s primary key (or with a unique constraint) to naturally enforce multi-column uniqueness.  
+
+### Example: `house_assignments`
+
+```python
+class HouseAssignment(Base):
+    __tablename__ = 'house_assignments'
+    student_id = Column(Integer, ForeignKey('students.id'), primary_key=True)
+    house_id   = Column(Integer, ForeignKey('houses.id'), primary_key=True)
+```
+
+- Drops the surrogate `id`, relying on `(student_id, house_id)` for uniqueness.  
+- Simplifies upserts: you can `INSERT … ON CONFLICT DO NOTHING` on those two columns.  
+- Makes your data model closer to the real-world relationship without extra constraints.
+
+---
 
 ## Next Topics to Study
 

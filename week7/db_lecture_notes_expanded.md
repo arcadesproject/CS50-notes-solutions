@@ -1,7 +1,3 @@
-Certainly. Here's a cleaned-up, structured, and annotated version of your database notes in Markdown format. Each section includes a summary to reinforce understanding, and there's a linked table of contents at the top and suggested next topics at the end.
-
----
-
 # Databases: A Structured Overview
 
 ## Topics Covered
